@@ -94,9 +94,9 @@ public abstract partial class Endpoint<TRequest, TResponse> where TRequest : not
                ? ctx.Response.SendNoContentAsync(cancellation)
                : ctx.Response.SendAsync(responseDto, ctx.Response.StatusCode, jsonSerializerContext, cancellation);
 
-    static void AddProcessors(object[] processors, List<object> target)
+    static void AddProcessors(IReadOnlyList<object> processors, ICollection<object> target)
     {
-        for (var i = 0; i < processors.Length; i++)
+        for (var i = 0; i < processors.Count; i++)
         {
             var p = processors[i];
 

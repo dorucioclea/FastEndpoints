@@ -59,10 +59,7 @@ public abstract partial class Endpoint<TRequest, TResponse> where TRequest : not
     /// group, you'd specify it with this parameter. The generated const/key is accessible via "Allow.Admin.Edit_Stock_Item" as well as
     /// "Allow.Manager.Edit_Stock_Item"
     /// </param>
-    protected void AccessControl(string keyName, params string[] groupNames)
-    {
-        AccessControl(keyName, Apply.ToThisEndpoint, groupNames);
-    }
+    protected void AccessControl(string keyName, params string[] groupNames) { AccessControl(keyName, Apply.ToThisEndpoint, groupNames); }
 
     /// <summary>
     /// allow unauthenticated requests to this endpoint. optionally specify a set of verbs to allow unauthenticated access with.
@@ -368,6 +365,9 @@ public abstract partial class Endpoint<TRequest, TResponse> where TRequest : not
     protected void PreProcessors(params IPreProcessor<TRequest>[] preProcessors)
         => AddProcessors(preProcessors, Definition.PreProcessorList);
 
+    protected void AddPreProcessor<TPreProcessor>() where TPreProcessor : IPreProcessor
+        => Definition.PreProcessorTypeList.Add(new(null, typeof(TPreProcessor)));
+
     /// <summary>
     /// specify to listen for PUT requests on one or more routes.
     /// </summary>
@@ -521,10 +521,7 @@ public abstract partial class Endpoint<TRequest, TResponse> where TRequest : not
     /// <summary>
     /// specify one or more http method verbs this endpoint should be accepting requests for
     /// </summary>
-    protected void Verbs(params Http[] methods)
-    {
-        Verbs(methods.Select(m => m.ToString()).ToArray());
-    }
+    protected void Verbs(params Http[] methods) { Verbs(methods.Select(m => m.ToString()).ToArray()); }
 
     /// <summary>
     /// specify one or more http method verbs this endpoint should be accepting requests for
@@ -612,9 +609,6 @@ static class ProducesMetaForResultOfResponse
         }
     }
 
-    static void Populate<T>(EndpointBuilder b) where T : IEndpointMetadataProvider
-    {
-        T.PopulateMetadata(_populateMethod, b);
-    }
+    static void Populate<T>(EndpointBuilder b) where T : IEndpointMetadataProvider { T.PopulateMetadata(_populateMethod, b); }
 }
 #endif

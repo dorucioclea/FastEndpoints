@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using static FastEndpoints.Config;
 
@@ -50,8 +51,8 @@ static class RequestHandler
         epInstance.Definition = epDef;
         epInstance.HttpContext = ctx;
         ctx.Items[CtxKey.ValidationFailures] = epInstance.ValidationFailures;
-
         ResponseCacheExecutor.Execute(ctx, epDef.ResponseCacheSettings);
+        OneTimeProcessorInit(epDef, ctx.RequestServices);
 
         return epInstance.ExecAsync(ctx.RequestAborted);
     }
@@ -82,5 +83,32 @@ static class RequestHandler
         return
             !ctx.Request.Headers.ContainsKey(HeaderNames.ContentType) &&
             def is { AcceptsMetaDataPresent: true, AcceptsAnyContentType: false };
+    }
+
+    static void OneTimeProcessorInit(EndpointDefinition epDef, IServiceProvider serviceProvider)
+    {
+        if (epDef.PreProcessorTypeList.Count > 0)
+        {
+            foreach (var (order, type) in epDef.PreProcessorTypeList)
+            {
+                var p = ActivatorUtilities.CreateInstance(serviceProvider, type);
+
+                //todo: populate epDef.PreProcessorList
+            }
+
+            epDef.PreProcessorTypeList.Clear(); //clearing to avoid entering this 'if' branch again
+        }
+
+        if (epDef.PostProcessorTypeList.Count > 0)
+        {
+            foreach (var (order, type) in epDef.PostProcessorTypeList)
+            {
+                var p = ActivatorUtilities.CreateInstance(serviceProvider, type);
+
+                //todo: populate epDef.PostProcessorList
+            }
+        }
+
+        epDef.PostProcessorTypeList.Clear(); //clearing to avoid entering this 'if' branch again
     }
 }

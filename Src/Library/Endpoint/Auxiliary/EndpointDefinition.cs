@@ -61,11 +61,13 @@ public sealed class EndpointDefinition
     internal bool ExecuteAsyncReturnsIResult => _execReturnsIResults ??= ResDtoType.IsAssignableTo(Types.IResult);
     internal bool FoundDuplicateValidators;
     internal HitCounter? HitCounter { get; private set; }
-    internal Action<RouteHandlerBuilder> InternalConfigAction;
+    internal Action<RouteHandlerBuilder> InternalConfigAction = null!;
     internal bool ImplementsConfigure;
     internal object? RequestBinder;
     internal readonly List<object> PreProcessorList = new();
+    internal readonly List<(Order?, Type)> PreProcessorTypeList = new();
     internal readonly List<object> PostProcessorList = new();
+    internal readonly List<(Order?, Type)> PostProcessorTypeList = new();
     ServiceBoundEpProp[]? _serviceBoundEpProps;
     internal ServiceBoundEpProp[]? ServiceBoundEpProps => _serviceBoundEpProps ??= GetServiceBoundEpProps();
     internal JsonSerializerContext? SerializerContext;
@@ -108,11 +110,11 @@ public sealed class EndpointDefinition
             });
     };
 
-    static void AddProcessor(Order order, object[] processors, List<object> list)
+    internal static void AddProcessor(Order order, IReadOnlyList<object> processors, IList<object> list)
     {
         var pos = 0;
 
-        for (var i = 0; i < processors.Length; i++)
+        for (var i = 0; i < processors.Count; i++)
         {
             var p = processors[i];
 
@@ -322,6 +324,9 @@ public sealed class EndpointDefinition
     /// </param>
     /// <param name="preProcessors">the pre-processors to add</param>
     public void PreProcessors(Order order, params IGlobalPreProcessor[] preProcessors) { AddProcessor(order, preProcessors, PreProcessorList); }
+
+    public void AddPreProcessor<TPreProcessor>(Order order) where TPreProcessor : IGlobalPreProcessor
+        => PreProcessorTypeList.Add(new(order, typeof(TPreProcessor)));
 
     /// <summary>
     /// specify response caching settings for this endpoint
